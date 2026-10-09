@@ -1,0 +1,4 @@
+org/openmrs/module/chuschedules/generator/RecurrenceEvaluatorTest.class
+org/openmrs/module/chuschedules/generator/GenerationReportTest.class
+org/openmrs/module/chuschedules/generator/RefreshPlannerTest.class
+org/openmrs/module/chuschedules/generator/OccurrencePlannerTest.class

@@ -1,0 +1,4 @@
+/home/server/openmrs-orthanc-integration/chuschedules/api/src/test/java/org/openmrs/module/chuschedules/generator/GenerationReportTest.java
+/home/server/openmrs-orthanc-integration/chuschedules/api/src/test/java/org/openmrs/module/chuschedules/generator/OccurrencePlannerTest.java
+/home/server/openmrs-orthanc-integration/chuschedules/api/src/test/java/org/openmrs/module/chuschedules/generator/RecurrenceEvaluatorTest.java
+/home/server/openmrs-orthanc-integration/chuschedules/api/src/test/java/org/openmrs/module/chuschedules/generator/RefreshPlannerTest.java

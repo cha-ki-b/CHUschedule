@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module configVersion="1.2">
+
+    <id>chuschedules</id>
+    <name>CHU Recurring Schedules</name>
+    <version>1.0.0</version>
+    <package>org.openmrs.module.chuschedules</package>
+    <author>CHU Blida - Neurochirurgie</author>
+    <description>Recurring weekly and monthly provider schedules, generated into appointment blocks</description>
+
+    <activator>org.openmrs.module.chuschedules.ChuSchedulesActivator</activator>
+
+    <require_version>2.4.3</require_version>
+
+    <require_modules>
+        <require_module version="1.16.0">
+            org.openmrs.module.appointmentscheduling
+        </require_module>
+        <require_module version="3.22.0">
+            org.openmrs.module.uiframework
+        </require_module>
+        <require_module version="1.14.0">
+            org.openmrs.module.appui
+        </require_module>
+        <require_module version="2.16.0">
+            org.openmrs.module.appframework
+        </require_module>
+    </require_modules>
+
+    <privilege>
+        <name>Manage Recurring Schedules</name>
+        <description>Create and generate recurring provider schedules</description>
+    </privilege>
+
+    <globalProperty>
+        <property>chuschedules.rollingHorizonDays</property>
+        <defaultValue>365</defaultValue>
+        <description>
+            How many days ahead the nightly rolling generation keeps the calendar filled.
+            Clamped to 365; the task does nothing unless it is started in the scheduler.
+        </description>
+    </globalProperty>
+
+    <mappingFiles>
+        ScheduleTemplate.hbm.xml
+        ScheduleTemplateRange.hbm.xml
+        ScheduleException.hbm.xml
+        GeneratedBlock.hbm.xml
+    </mappingFiles>
+
+</module>
