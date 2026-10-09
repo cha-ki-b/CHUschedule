@@ -3,13 +3,9 @@
 Recurring weekly and monthly provider schedules for OpenMRS, generated into ordinary
 appointment blocks.
 
-**Status:** phases 1–3 built, deployed and working on the CHU Blida instance. The system is
-destined for clinical use but is currently in a development phase: the appointment services,
+**Status:** The system isdestined for clinical use but is currently in a development phase: the appointment services,
 locations and providers it points at are still the stock OpenMRS demo records, so nothing
-generated so far is clinically meaningful. Treat writes with the care the rest of this repo
-demands (see `../CLAUDE.md`).
-See [`../Recurring-Schedules-Design.md`](../Recurring-Schedules-Design.md) for the design
-and the reasoning behind it.
+generated so far is clinically meaningful.
 
 ---
 
@@ -18,7 +14,7 @@ and the reasoning behind it.
 `appointmentschedulingui/scheduleProviders.page` creates **one appointment block per
 provider per day, by hand, forever**. There is no recurrence anywhere in the shipped stack:
 the calendar reacts to `dayClick` only, and on save it rebuilds the end timestamp from the
-*start* date, so a block cannot even span two days by construction.
+_start_ date, so a block cannot even span two days by construction.
 
 For a department running six clinics a week, that is roughly 250 manual dialogs per provider
 per year.
@@ -38,10 +34,10 @@ daily lists, reports and REST all work unchanged. **No upstream table is modifie
 
 Two rules, deliberately a small subset of iCalendar:
 
-| Rule | Fields | Expresses |
-| --- | --- | --- |
-| `WEEKLY` | weekday, interval, anchor | every Tuesday; every **other** Tuesday; one week in three |
-| `MONTHLY_NTH` | weekday, position 1–4 or last | the **first Monday** of the month |
+| Rule          | Fields                        | Expresses                                                 |
+| ------------- | ----------------------------- | --------------------------------------------------------- |
+| `WEEKLY`      | weekday, interval, anchor     | every Tuesday; every **other** Tuesday; one week in three |
+| `MONTHLY_NTH` | weekday, position 1–4 or last | the **first Monday** of the month                         |
 
 The anchor is normalised onto the range's weekday, so cycle arithmetic is exact integer
 maths with no week-start convention (Saturday? Sunday? Monday?) to get wrong.
@@ -90,14 +86,14 @@ schedule creates the few days that newly came within the horizon and skips the r
 planner (16), the refresh decision (13) and the report grouping (6). Each guarantee exists
 because the alternative is dangerous in a hospital:
 
-| Invariant | Why |
-| --- | --- |
-| Never writes to a date on or before today | The past is a record, not a schedule. |
-| Never creates a block overlapping an existing one | The check is **provider-scoped**, so two doctors may hold clinic at the same hour, but work entered by hand is never shadowed or duplicated. |
+| Invariant                                             | Why                                                                                                                                                                                                                  |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Never writes to a date on or before today             | The past is a record, not a schedule.                                                                                                                                                                                |
+| Never creates a block overlapping an existing one     | The check is **provider-scoped**, so two doctors may hold clinic at the same hour, but work entered by hand is never shadowed or duplicated.                                                                         |
 | Never deletes or alters a block that has appointments | Editing a pattern voids only **future, generated, empty** blocks. Booked ones stay at the old times and are reported for a human to resolve. A silently moved booked clinic is the worst thing this module could do. |
-| Idempotent | Enforced by `unique(range_id, target_date)` in the database, not by luck of timing. |
-| Every skip reported with a reason | Both the manual action and the nightly task must be auditable afterwards. |
-| One run is capped at 366 days | An unbounded horizon is how a mistyped date becomes a decade of blocks. |
+| Idempotent                                            | Enforced by `unique(range_id, target_date)` in the database, not by luck of timing.                                                                                                                                  |
+| Every skip reported with a reason                     | Both the manual action and the nightly task must be auditable afterwards.                                                                                                                                            |
+| One run is capped at 366 days                         | An unbounded horizon is how a mistyped date becomes a decade of blocks.                                                                                                                                              |
 
 Editing only the name or validity dates changes nothing about the schedule: the pattern is
 fingerprinted and compared, so **a rename cannot move anybody's appointment**.
@@ -136,13 +132,13 @@ perfectly good module still 404s.
 
 Each of these cost real time. They are cheap to re-introduce.
 
-| Trap | Rule |
-| --- | --- |
-| **A `--` inside an XML comment took the whole application UI down.** Spring refreshes every module's web context together, so one malformed file stops the entire OpenMRS web layer — the login page 404s and the app looks dead. Neither Maven nor omod packaging parses these files. | Run `./validate-xml.sh` before every deploy. |
-| **Calendar dates mapped as `java.util.Date` land on the wrong day.** The app JVM runs `Africa/Algiers` (UTC+1) while MySQL runs UTC, so binding a date as a *timestamp* turns local midnight into 23:00 the previous day and a `DATE` column keeps the earlier day. A template saved as valid from 1 Sept was stored as 31 Aug. | Map calendar dates as Hibernate `type="date"`. Only genuine instants — the audit columns — stay timestamps. |
-| **Hard-deleting a range breaks editing, invisibly.** `getRanges().clear()` under `all-delete-orphan` DELETEs rows that `chu_generated_block` references. The database refuses, but the violation surfaces during the *end-of-request* flush, after the controller's try/catch has returned — so the page renders normally and the user's edit vanishes silently. It only manifests once a template has generated something. | Cascade `all`, void ranges instead of deleting, and `Context.flushSession()` inside the service call. |
-| **A scheduled task registered without a start time does nothing when started**, with no error explaining why. | Always `setStartTime()` when registering a `TaskDefinition`. |
-| **`07:00` in the database is an `08:00` clinic.** MySQL stores UTC, the app renders CET. | Verify times through the app or REST, never by reading the raw column. Hand-made blocks show the same offset. |
+| Trap                                                                                                                                                                                                                                                                                                                                                                                                                        | Rule                                                                                                          |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **A `--` inside an XML comment took the whole application UI down.** Spring refreshes every module's web context together, so one malformed file stops the entire OpenMRS web layer — the login page 404s and the app looks dead. Neither Maven nor omod packaging parses these files.                                                                                                                                      | Run `./validate-xml.sh` before every deploy.                                                                  |
+| **Calendar dates mapped as `java.util.Date` land on the wrong day.** The app JVM runs `Africa/Algiers` (UTC+1) while MySQL runs UTC, so binding a date as a _timestamp_ turns local midnight into 23:00 the previous day and a `DATE` column keeps the earlier day. A template saved as valid from 1 Sept was stored as 31 Aug.                                                                                             | Map calendar dates as Hibernate `type="date"`. Only genuine instants — the audit columns — stay timestamps.   |
+| **Hard-deleting a range breaks editing, invisibly.** `getRanges().clear()` under `all-delete-orphan` DELETEs rows that `chu_generated_block` references. The database refuses, but the violation surfaces during the _end-of-request_ flush, after the controller's try/catch has returned — so the page renders normally and the user's edit vanishes silently. It only manifests once a template has generated something. | Cascade `all`, void ranges instead of deleting, and `Context.flushSession()` inside the service call.         |
+| **A scheduled task registered without a start time does nothing when started**, with no error explaining why.                                                                                                                                                                                                                                                                                                               | Always `setStartTime()` when registering a `TaskDefinition`.                                                  |
+| **`07:00` in the database is an `08:00` clinic.** MySQL stores UTC, the app renders CET.                                                                                                                                                                                                                                                                                                                                    | Verify times through the app or REST, never by reading the raw column. Hand-made blocks show the same offset. |
 
 ## Known gaps
 
@@ -151,11 +147,10 @@ Each of these cost real time. They are cheap to re-introduce.
   (`RefreshPlanner`, 13 tests); what remains uncovered is the thin adapter around it —
   the service calls that fetch a block by uuid and void it.
 - **No capacity model.** Booking capacity remains the upstream rule (time left in the slot
-  versus service duration). Templates set *when* a clinic is open, not how many patients fit.
+  versus service duration). Templates set _when_ a clinic is open, not how many patients fit.
 - **Lunar holidays are data, not an algorithm.** Eid moves each year and must be entered.
 - **An `appointmentscheduling` upgrade could change the block/slot contract.** §2 of the
   design doc is the thing to re-verify.
-
 
 ## Why there is no context-sensitive test
 
@@ -189,4 +184,4 @@ module graph but to test against a real running instance — which is how every 
 this module has in fact been verified, including this one: editing a template with 89
 generated blocks, one of them booked, reports `voided=88 kept=1` and leaves the booked
 appointment untouched.
-"# CHUschedule" 
+"# CHUschedule"
